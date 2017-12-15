@@ -36,7 +36,7 @@ from flask import jsonify
 # Importa o banco de dados
 from app import db
 
-def PredictARIMARainfall():
+def PredictSARIMARainfall():
 
     # Busca dataset no banco de dados
     weather = list(db.meteo_data_weather_data.find({'weather_station_id': ObjectId('598f58415718dd578b4c8255')}))
@@ -57,10 +57,14 @@ def PredictARIMARainfall():
     print("Testing Series:", "\n", ts_test.head())
 
     # Treina e define o modelo
-    p=2
+    p=0
     d=0
-    q=2
-    arima202 = sm.tsa.SARIMAX(ts_train, order=(p,d,q))
+    q=4
+    P=3
+    D=0
+    Q=4
+    s=12
+    arima202 = sm.tsa.SARIMAX(ts_train, order=(p,d,q), seasonal_order=(P,D,Q,s), enforce_stationarity=False, enforce_invertibility=False)
     model_results = arima202.fit()
 
     # Realiza previsões
@@ -110,10 +114,11 @@ def PredictARIMARainfall():
     dict_data['data_pred']=pred_list
     dict_data['index']=index_list
     dict_data['city']='Sao Paulo'
-    dict_data['model']='ARIMA'
+    dict_data['model']='SARIMA'
     tempoFinalização=datetime.datetime.now()
     dict_data['date']=tempoFinalização
     dict_data['pdq']= str(p)+',  '+str(d)+',  '+str(q)
+    dict_data['PDQs']= str(P)+',  '+str(D)+',  '+str(Q)+', '+str(s)
     dict_data['rmse_train']=get_rmse(ts_train, pred_mean.ix[ts_train.index])
     dict_data['rmse_test']=get_rmse(ts_test, pred_mean.ix[ts_test.index])
     dict_data['AIC']=model_results.aic
