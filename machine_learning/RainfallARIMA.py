@@ -36,10 +36,23 @@ from flask import jsonify
 # Importa o banco de dados
 from app import db
 
-def PredictARIMARainfall():
+def PredictARIMARainfall(stationId):
+
+    # Get station Infos
+    station_info = list(db.meteo_data_weather_stations.find({'_id':ObjectId(stationId)}))
+
+    print('\n')
+    print('*************************************************************')
+    print('**************** AgroAnalytics BRAINS API *******************')
+    print('*************************************************************')
+    print('\n')
+    print('------------------------- ARIMA -----------------------------')
+    print('\n')
+    print('Preparando dados da cidade de '+ station_info[0]['unparsed_city'] +'....')
+    print('\n')
 
     # Busca dataset no banco de dados
-    weather = list(db.meteo_data_weather_data.find({'weather_station_id': ObjectId('598f58415718dd578b4c8255')}))
+    weather = list(db.meteo_data_weather_data.find({'weather_station_id': ObjectId(stationId)}))
     weather_normalized = pd.io.json.json_normalize(weather)
     df_rainfall = pd.DataFrame(weather_normalized[['analysis_date', 'rainfall.rainfall']])
     df_rainfall = df_rainfall.set_index('analysis_date')
@@ -56,6 +69,8 @@ def PredictARIMARainfall():
     print("Training Series:", "\n", ts_train.tail(), "\n")
     print("Testing Series:", "\n", ts_test.head())
 
+    print('----------------- Iniciando Treinamento ---------------------')
+    print('\n')
     # Treina e define o modelo
     p=2
     d=0
@@ -109,7 +124,7 @@ def PredictARIMARainfall():
     dict_data['data_train']=data_train
     dict_data['data_pred']=pred_list
     dict_data['index']=index_list
-    dict_data['city']='Sao Paulo'
+    dict_data['city']=station_info[0]['unparsed_city']
     dict_data['model']='ARIMA'
     tempoFinalização=datetime.datetime.now()
     dict_data['date']=tempoFinalização
@@ -127,5 +142,8 @@ def PredictARIMARainfall():
 
     del dict_data['date']
     del dict_data['_id']
+
+    print('----------------------- Sucesso! ----------------------------')
+    print('\n')
 
     return jsonify({'message':message,'result':dict_data})

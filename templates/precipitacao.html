@@ -24,7 +24,8 @@
     <link rel="stylesheet" href="/static/bower_components/bootstrap-daterangepicker/daterangepicker.css">
     <!-- bootstrap wysihtml5 - text editor -->
     <link rel="stylesheet" href="/static/plugins/bootstrap-wysihtml5/bootstrap3-wysihtml5.min.css">
-
+    <!-- Loading Icon -->   
+    <script src="http://cdnjs.cloudflare.com/ajax/libs/modernizr/2.8.2/modernizr.js"></script>
     <!-- HTML5 Shim and Respond.js IE8 support of HTML5 elements and media queries -->
     <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
     <!--[if lt IE 9]>
@@ -34,9 +35,23 @@
 
     <!-- Google Font -->
     <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,600,700,300italic,400italic,600italic">
-    <script src="{{ url_for('static', filename='PredictRainfall.js') }}"></script>
+    <style>
+        .no-js #loader { display: none;  }
+        .js #loader { display: block; position: absolute; left: 100px; top: 0; }
+        .se-pre-con {
+            position: fixed;
+            left: 0px;
+            top: 0px;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            background: url(/static/images/loader-64x/Preloader_2.gif) center no-repeat #fff;
+        }    
+    </style>
 </head>
 <body class="hold-transition skin-blue sidebar-mini">
+    <!-- Loading Icon -->   
+    <div class="se-pre-con"></div>
     <div class="wrapper">
 
         <header class="main-header">
@@ -138,8 +153,10 @@
                                         <h4>Configurações:</h4>
                                         <form id="executeARIMA" class="form-inline">
                                             <div class="form-group">
-                                                <label class="sr-only" for="cidadeInput">Cidade</label>
-                                                <input type="email" class="form-control" id="cidadeInput" placeholder="Cidade">
+                                                <label class="sr-only" for="cidadeInput">Estações</label>
+                                                <select id="stationsARIMA" class="form-control select2" style="width: 400px;">
+                                                    <opttion value=''> </opttion>
+                                                </select>
                                             </div>
                                             <button type="submit" class="btn btn-default">Executar</button>
                                         </form>
@@ -233,8 +250,10 @@
                                         <h4>Configurações:</h4>
                                         <form id="executeSARIMA" class="form-inline">
                                             <div class="form-group">
-                                                <label class="sr-only" for="cidadeInput">Cidade</label>
-                                                <input type="email" class="form-control" id="cidadeInput" placeholder="Cidade">
+                                                <label class="sr-only" for="cidadeInput">Estações</label>
+                                                <select id="stationsSARIMA" class="form-control select2" style="width: 400px;">
+                                                    <opttion value=''></opttion>
+                                                </select>
                                             </div>
                                             <button type="submit" class="btn btn-default">Executar</button>
                                         </form>
@@ -310,7 +329,104 @@
                     </div>
                     <!-- /.col -->
                 </div>
-                <!-- /.row -->     
+                <!-- /.row -->
+                <div class="row">
+                    <div class="col-md-12">
+                        <!-- Default box -->
+                        <div class="box">
+                            <div class="box-header with-border">
+                            <h3 class="box-title">LSTM Recurrent Neural Network</h3>
+                    
+                            <div class="box-tools pull-right">
+                                <button type="button" class="btn btn-box-tool" data-widget="collapse" data-toggle="tooltip"
+                                        title="Collapse">
+                                <i class="fa fa-minus"></i></button>
+                                <button type="button" class="btn btn-box-tool" data-widget="remove" data-toggle="tooltip" title="Remove">
+                                <i class="fa fa-times"></i></button>
+                            </div>
+                            </div>
+                            <div class="box-body">
+                                <div class="row">
+                                    <div  class="col-xs-12">
+                                        <h4>Configurações:</h4>
+                                        <form id="executeLSTM" class="form-inline">
+                                            <div class="form-group">
+                                                <label class="sr-only" for="cidadeInput">Estações</label>
+                                                <select id="stationsLSTM" class="form-control select2" style="width: 400px;">
+                                                    <opttion value=''></opttion>
+                                                </select>
+                                            </div>
+                                            <button type="submit" class="btn btn-default">Executar</button>
+                                        </form>
+                                        <br>
+                                        <div id="LSTMsuccessAlert" class="alert alert-success alert-dismissible" role="alert" style="display:none;">
+                                            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                                            <h4><i class="icon fa fa-check"></i> Sucesso!</h4>
+                                            <h id="LSTMsuccessMessage"></h>
+                                        </div>
+                                        <div id="LSTMprocessingAlert" class="alert alert-info alert-dismissible" role="alert" style="display:none;">
+                                            <button type="button" class="close" data-dismiss="alert" aria-hidden="true">&times;</button>
+                                            <h4><i class="icon fa fa-refresh"></i> Processando</h4>
+                                            <h id="LSTMprocessingMessage"></h>
+                                        </div> 
+                                        <button id="LSTMupdateChart" class="btn btn-default" >Última Atualização</button>      
+                                    </div>
+                                </div>
+                                <div id="LSTMDiagnosis"  class="row"  style="display:none">
+                                    <br/>
+                                    <div class="col-xs-2">
+                                        <h4>Informações do Modelo</h4>
+                                        <table id="example2" class="table table-bordered table-hover">
+                                            <tbody>
+                                                <tr>
+                                                    <td><b>Cidade</b></td>
+                                                    <td id="LSTMcity"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Data</b></td>
+                                                    <td id="LSTMdate"></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                        <table id="example2" class="table table-bordered table-hover">
+                                            <tbody>
+                                                <tr>
+                                                    <td><b>Memmory Blocks</b></td>
+                                                    <td id="LSTM"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Epochs</b></td>
+                                                    <td id="Epochs"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>Optimizer</b></td>
+                                                    <td id="Optimizer"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>RMSE train</b></td>
+                                                    <td id="LSTMRMSEtrain"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>RMSE test</b></td>
+                                                    <td id="LSTMRMSEtest"></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div class="col-xs-10"> 
+                                        <div class="chart">
+                                            <canvas id="LSTMChart" style="height:350px">></canvas>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- /.box-body -->
+                        </div>
+                        <!-- /.box -->
+                    </div>
+                    <!-- /.col -->
+                </div>
+                <!-- /.row -->      
             </section>
             <!-- /.content -->
         </div>
@@ -358,6 +474,6 @@
     <!-- ChartJS -->
     <script src="/static/bower_components/Chart.js/Chart.min.js"></script>
 
-    <script src="/static/PredictRainfall.js"></script>
+    <script src="/static/JS/PredictRainfall.js"></script>
 </body>
 </html>
