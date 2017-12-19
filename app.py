@@ -42,6 +42,8 @@ from machine_learning.RainfallLSTM import PredictLSTMRainfall
 from machine_learning.TemperatureARIMA import PredictARIMATemperature, getArimaTempratureParameters
 from machine_learning.TemperatureLSTM import PredictLSTMTemperature
 from machine_learning.TemperatureSARIMA import PredictSARIMATemperature
+from machine_learning.QuotationARIMA import PredictARIMAQuotation, getArimaQuotationParameters
+from machine_learning.QuotationLSTM import PredictLSTMQuotation
 
 # ------------------------------ Routes -----------------------------------
 
@@ -52,19 +54,26 @@ def index():
     '''
     return render_template('index.html')
 
-@app.route('/temperatura')
-def temperatura():
-    '''
-        Rota para renderizar página de Precipitação
-    '''
-    return render_template('temperatura.html')
-
 @app.route('/precipitacao')
 def precipitacao():
     '''
         Rota para renderizar página de Precipitação
     '''
     return render_template('precipitacao.html')
+
+@app.route('/temperatura')
+def temperatura():
+    '''
+        Rota para renderizar página de Temperatura
+    '''
+    return render_template('temperatura.html')
+
+@app.route('/cotacao')
+def cotacao():
+    '''
+        Rota para renderizar página de Temperatura
+    '''
+    return render_template('cotacao.html')
 
 @app.route('/stations')
 def stations():
@@ -77,6 +86,28 @@ def stations():
     stations = stations[['name', '_id']].values.tolist()
     stations_sanitized = json.loads(json_util.dumps(stations))
     return jsonify({'stations': stations_sanitized})
+
+@app.route('/ufs')
+def ufs():
+    '''
+        Rota para pegar documents com ufs
+    '''
+    ufs = pd.DataFrame(list(db.federal_units.find({})))
+    ufs = ufs.sort_values('name')
+    ufs = ufs[['name', '_id']].values.tolist()
+    ufs_sanitized = json.loads(json_util.dumps(ufs))
+    return jsonify({'ufs': ufs_sanitized})
+
+@app.route('/produtos')
+def produtos():
+    '''
+        Rota para pegar documents com produtos
+    '''
+    products = pd.DataFrame(list(db.products.find({})))
+    products = products.sort_values('name')
+    products = products[['name', '_id']].values.tolist()
+    products_sanitized = json.loads(json_util.dumps(products))
+    return jsonify({'products': products_sanitized})
 
 @app.route('/PredictRainfall', methods=['POST'])
 def PredictRainfall():
@@ -102,6 +133,16 @@ def PredictTemperature():
         result = 'ERRO!'
     return result
 
+@app.route('/PredictQuotation', methods=['POST'])
+def PredictQuotation():
+    if request.form['modelo'] == 'ARIMA':
+        result = PredictARIMAQuotation(request.form['uf_id'],request.form['product_id'],request.form['p'],request.form['d'],request.form['q'])
+    elif request.form['modelo'] == 'LSTM':
+        result = PredictLSTMQuotation(request.form['uf_id'],request.form['product_id'])
+    else:
+        result = 'ERRO!'
+    return result
+
 @app.route('/RainfallParameters', methods=['POST'])
 def RainfallParameters():
     if request.form['modelo'] == 'ARIMA':
@@ -116,6 +157,16 @@ def RainfallParameters():
 def TemperatureParameters():
     if request.form['modelo'] == 'ARIMA':
         result = getArimaTempratureParameters(request.form['stationId'])
+    elif request.form['modelo'] == 'SARIMA':
+        result = PredictSARIMARainfall(request.form['stationId'])
+    else:
+        result = 'ERRO!'
+    return result
+
+@app.route('/QuotationParameters', methods=['POST'])
+def QuotationParameters():
+    if request.form['modelo'] == 'ARIMA':
+        result = getArimaQuotationParameters(request.form['uf_id'],request.form['product_id'],)
     elif request.form['modelo'] == 'SARIMA':
         result = PredictSARIMARainfall(request.form['stationId'])
     else:
@@ -196,6 +247,45 @@ def chartTemperatureARIMA():
                     'AIC':format(last_data[0]['AIC'], '.4f'),
                     'BIC':format(last_data[0]['BIC'], '.4f'),
                     'city':last_data[0]['city'],
+                    'date':last_data[0]['date'].strftime('%d/%m/%Y')})
+
+@app.route("/chartQuotationARIMA")
+def chartQuotationARIMA():
+    '''
+        Rota utilizada para plotar gráfico de treino e teste do último modelo ARIMA processado
+        para dados de Precipitação
+    '''
+    # Obtem ultimo documento de previsão processado
+    last_data = list(db2.ARIMA_predictions.find({'model': 'ARIMA', 'type': 'Cotação'}).sort([('_id',-1)]).limit(1))
+    # Carraga para variável timestamps o index dos ultimos 5 anos
+    timestamps=last_data[0]['index'][-60:]
+    # Trata formato do index
+    date_strings = [d.strftime('%m-%Y') for d in timestamps]
+    # Cria uma lista com um index por ano, para não sobrecarregar a visão do gráfico
+    date=[]
+    for i in range(0,len(date_strings)):
+        if i%4 == 0:
+            date.append(date_strings[i])
+        else:
+            date.append("")
+    # Preenche lista com index
+    index = date
+    # Preenche lista com dados originais de precipitação
+    data_train = last_data[0]['data_train'][-len(date_strings):]
+    # Preenche lista com dados originais de precipitação
+    data_test = last_data[0]['data_test'][-len(date_strings):]
+    # Preenche lista com dados de previsão 
+    pred = last_data[0]['data_pred'][-len(date_strings):]
+    return jsonify({'data_train':data_train, 
+                    'data_test':data_test, 
+                    'pred': pred, 'index':index, 
+                    'pdq':last_data[0]['pdq'], 
+                    'rmse_train':format(last_data[0]['rmse_train'], '.4f'), 
+                    'rmse_test':format(last_data[0]['rmse_test'], '.4f'),
+                    'AIC':format(last_data[0]['AIC'], '.4f'),
+                    'BIC':format(last_data[0]['BIC'], '.4f'),
+                    'uf':last_data[0]['uf'],
+                    'product':last_data[0]['product'],
                     'date':last_data[0]['date'].strftime('%d/%m/%Y')})
 
 @app.route("/chartRainfallSARIMA")

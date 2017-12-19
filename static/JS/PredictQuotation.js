@@ -1,27 +1,49 @@
 $(document).ready(function() {
 
-	var stationOptions
+	var ufsOptions
+	var productOptions
 	
 	$.ajax({
-		url : '/stations',
+		url : '/ufs',
 		context: document.body,
 		success: function(data) {
-			$.each(data.stations, function(i, station){
+			console.log(data)
+			$.each(data.ufs, function(i, ufs){
 				
-				stationOptions+="<option value='"
-				+station[1].$oid+
+				ufsOptions+="<option value='"
+				+ufs[1].$oid+
 				"'>"
-				+station[0]+
+				+ufs[0]+
 				"</option>";
 			});
-	
-			$('#stationsARIMA').html(stationOptions);
-			$('#stationsSARIMA').html(stationOptions);
-			$('#stationsLSTM').html(stationOptions);
+			console.log(ufsOptions)
+			$('#ARIMAUFs').html(ufsOptions);
+			$('#LSTMUFs').html(ufsOptions);
 		}
+	
 	}).done(function(data){
+		$.ajax({
+			url : '/produtos',
+			context: document.body,
+			success: function(data) {
+				console.log(data)
+				$.each(data.products, function(i, products){
+					
+					productOptions+="<option value='"
+					+products[1].$oid+
+					"'>"
+					+products[0]+
+					"</option>";
+				});
+				console.log(productOptions)
+				$('#produtosARIMA').html(productOptions);
+				$('#produtosLSTM').html(productOptions);
+			}
+		
+		})
 		$(".se-pre-con").fadeOut("slow");
 	});
+
 
 	$('form').on('submit', function(event) {
 
@@ -36,14 +58,15 @@ $(document).ready(function() {
 	
 			var formData = new FormData();
 			formData.append('modelo', 'ARIMA')
-			formData.append('stationId' ,$('#stationsARIMA option:selected').val());
+			formData.append('uf_id' ,$('#ARIMAUFs option:selected').val());
+			formData.append('product_id' ,$('#produtosARIMA option:selected').val());
 			formData.append('p' , Number($('#ARIMAp').val()));
 			formData.append('d' , Number($('#ARIMAd').val()));
 			formData.append('q' , Number($('#ARIMAq').val()));
 	
 			$.ajax({
 				type : 'POST',
-				url : '/PredictTemperature',
+				url : '/PredictQuotation',
 				data : formData,
 				processData : false,
 				contentType : false
@@ -66,42 +89,6 @@ $(document).ready(function() {
 				}
 	
 			});
-		} else if (formId == 'executeSARIMA') {
-			$('#SARIMAprocessingAlert').show();
-			$('#SARIMAprocessingMessage').text("Aguarde até o término da execução.");
-			$('#SARIMAsuccessAlert').hide();
-	
-			event.preventDefault();
-	
-			var formData = new FormData();
-			formData.append('modelo', 'SARIMA')
-			formData.append('stationId' ,$('#stationsSARIMA option:selected').val());
-	
-			$.ajax({
-				type : 'POST',
-				url : '/PredictTemperature',
-				data : formData,
-				processData : false,
-				contentType : false
-			})
-			.done(function(data) {
-				
-				if (data.error) {
-					//
-					// 	TODO
-					//
-					$('#errorAlert').text(data.error).show();
-					$('#successAlert').hide();
-				}
-				else {
-					$('#SARIMAsuccessAlert').show();
-					$('#SARIMAsuccessMessage').text(data.message);
-					$('#SARIMAprocessingAlert').hide();
-					$('#SARIMAupdateChart').show();
-					
-				}
-	
-			});
 		} else if (formId == 'executeLSTM') {
 			$('#LSTMprocessingAlert').show();
 			$('#LSTMprocessingMessage').text("Aguarde até o término da execução.");
@@ -111,12 +98,13 @@ $(document).ready(function() {
 	
 			var formData = new FormData();
 			formData.append('modelo', 'LSTM')
-			formData.append('stationId' ,$('#stationsLSTM option:selected').val());
+			formData.append('uf_id' ,$('#LSTMUFs option:selected').val());
+			formData.append('product_id' ,$('#produtosLSTM option:selected').val());
 			
 	
 			$.ajax({
 				type : 'POST',
-				url : '/PredictTemperature',
+				url : '/PredictQuotation',
 				data : formData,
 				processData : false,
 				contentType : false,
@@ -160,21 +148,21 @@ $(document).ready(function() {
 				}
 	
 			});
-		} 
+		}
 	});
 })
 
 
-$('#ARIMAupdateChart').on('click', ARIMAupdateChart);
-$('#SARIMAupdateChart').on('click', SARIMAupdateChart);
+$('#ARIMAupdateChart').on('click', ARIMAparametros);
+$('#ARIMAupdateChart2').on('click', ARIMAupdateChart);
 $('#LSTMupdateChart').on('click', LSTMupdateChart);
-$('#ARIMAparameters').on('click', ARIMAparameters);
 
-function ARIMAparameters() {
 
+function ARIMAparametros() {
 	var formData = new FormData();
 	formData.append('modelo', 'ARIMA')
-	formData.append('stationId' ,$('#stationsARIMA option:selected').val());
+	formData.append('uf_id' ,$('#ARIMAUFs option:selected').val());
+	formData.append('product_id' ,$('#produtosARIMA option:selected').val());
 
 	$('#ARIMABestParameters').hide();
 	$('#ARIMAprocessingAlert').show();
@@ -183,7 +171,7 @@ function ARIMAparameters() {
 
 	$.ajax({
 		type : 'POST',
-		url : '/TemperatureParameters',
+		url : '/QuotationParameters',
 		data : formData,
 		processData : false,
 		contentType : false
@@ -219,7 +207,7 @@ function ARIMAparameters() {
 
 function ARIMAupdateChart() {
 
-	var updateData = $.get('/chartTemperatureARIMA');
+	var updateData = $.get('/chartQuotationARIMA');
 	
 	$('#ARIMADiagnosis').show();
 
@@ -318,125 +306,18 @@ function ARIMAupdateChart() {
 		$('#ARIMARMSEtest').text(results.rmse_test);
 		$('#ARIMAAIC').text(results.AIC);
 		$('#ARIMABIC').text(results.BIC);
-		$('#ARIMAcity').text(results.city);
+		$('#ARIMAuf').text(results.uf);
+		$('#ARIMAproduct').text(results.product);
 		$('#ARIMAdate').text(results.date);
+	
 	})
 
 }
 
 
-function SARIMAupdateChart() {
-	
-		var updateData = $.get('/chartTemperatureSARIMA');
-		
-		$('#SARIMADiagnosis').show();
-	
-		updateData.done(function(results) {
-		
-			var data = {
-				labels: results.index,	
-				datasets: [
-					{
-					  label               : 'Dados de Treino',
-					  fillColor           : 'rgba(210, 214, 222, 1)',
-					  strokeColor         : 'rgba(210, 214, 222, 1)',
-					  pointColor          : 'rgba(210, 214, 222, 1)',
-					  pointStrokeColor    : '#c1c7d1',
-					  pointHighlightFill  : '#fff',
-					  pointHighlightStroke: 'rgba(220,220,220,1)',
-					  data                : results.data_train
-					},
-					{
-					  label               : 'Dados de Teste',
-					  fillColor           : 'rgba(255, 178, 102, 1)',
-					  strokeColor         : 'rgba(255, 178, 102, 1)',
-					  pointColor          : 'rgba(255, 178, 102, 1)',
-					  pointStrokeColor    : 'rgba(255, 178, 102, 1)',
-					  pointHighlightFill  : '#fff',
-					  pointHighlightStroke: 'rgba(255,178,102,1)',
-					  borderDash: [5, 5],
-					  data                : results.data_test
-					},
-					{
-					  label               : 'Previsões',
-					  fillColor           : 'rgba(60,141,188,0.9)',
-					  strokeColor         : 'rgba(60,141,188,0.8)',
-					  pointColor          : '#3b8bba',
-					  pointStrokeColor    : 'rgba(60,141,188,1)',
-					  pointHighlightFill  : '#fff',
-					  pointHighlightStroke: 'rgba(60,141,188,1)',
-					  data                : results.pred
-					}
-				  ]
-	
-			}
-	
-			var ChartOptions = {
-				//Boolean - If we should show the scale at all
-				showScale               : true,
-				//Boolean - Whether grid lines are shown across the chart
-				scaleShowGridLines      : false,
-				//String - Colour of the grid lines
-				scaleGridLineColor      : 'rgba(0,0,0,.05)',
-				//Number - Width of the grid lines
-				scaleGridLineWidth      : 1,
-				//Boolean - Whether to show horizontal lines (except X axis)
-				scaleShowHorizontalLines: true,
-				//Boolean - Whether to show vertical lines (except Y axis)
-				scaleShowVerticalLines  : true,
-				//Boolean - Whether the line is curved between points
-				bezierCurve             : true,
-				//Number - Tension of the bezier curve between points
-				bezierCurveTension      : 0.3,
-				//Boolean - Whether to show a dot for each point
-				pointDot                : false,
-				//Number - Radius of each point dot in pixels
-				pointDotRadius          : 4,
-				//Number - Pixel width of point dot stroke
-				pointDotStrokeWidth     : 1,
-				//Number - amount extra to add to the radius to cater for hit detection outside the drawn point
-				pointHitDetectionRadius : 20,
-				//Boolean - Whether to show a stroke for datasets
-				datasetStroke           : true,
-				//Number - Pixel width of dataset stroke
-				datasetStrokeWidth      : 2,
-				//Boolean - Whether to fill the dataset with a color
-				datasetFill             : true,
-				//String - A legend template
-				legendTemplate          : '<ul class="<%=name.toLowerCase()%>-legend"><% for (var i=0; i<datasets.length; i++){%><li><span style="background-color:<%=datasets[i].lineColor%>"></span><%if(datasets[i].label){%><%=datasets[i].label%><%}%></li><%}%></ul>',
-				//Boolean - whether to maintain the starting aspect ratio or not when responsive, if set to false, will take up entire container
-				maintainAspectRatio     : true,
-				//Boolean - whether to make the chart responsive to window resizing
-				responsive              : true
-			  }
-	
-			//-------------
-			//- LINE CHART -
-			//--------------
-			var lineChartCanvas          = $('#SARIMAChart').get(0).getContext('2d');
-			var lineChart                = new Chart(lineChartCanvas);
-			var lineChartOptions         = ChartOptions;
-			lineChartOptions.datasetFill = false;
-			//lineChartOptions.scales.xAxes.ticks.autoSkip=true
-			//lineChartOptions.scales.xAxes.ticks.maxTicksLimit = 24
-			lineChart.Line(data, ChartOptions);	
-			
-			$('#SARIMApdq').text(results.pdq);
-			$('#SARIMAPDQs').text(results.PDQs);
-			$('#SARIMARMSEtrain').text(results.rmse_train);
-			$('#SARIMARMSEtest').text(results.rmse_test);
-			$('#SARIMAAIC').text(results.AIC);
-			$('#SARIMABIC').text(results.BIC);
-			$('#SARIMAcity').text(results.city);
-			$('#SARIMAdate').text(results.date);
-		
-		})
-	
-	}
-
 	function LSTMupdateChart() {
 		
-			var updateData = $.get('/chartTemperatureLSTM');
+			var updateData = $.get('/chartRainfallLSTM');
 			
 			$('#LSTMDiagnosis').show();
 		

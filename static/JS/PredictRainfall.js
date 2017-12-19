@@ -1,6 +1,6 @@
 $(document).ready(function() {
 
-	$(".se-pre-con").fadeOut("slow");;
+	
 
 	var stationOptions
 	
@@ -23,6 +23,8 @@ $(document).ready(function() {
 			$('#stationsLSTM').html(stationOptions);
 		}
 	
+	}).done(function(data){
+		$(".se-pre-con").fadeOut("slow");
 	});
 
 	$('form').on('submit', function(event) {
