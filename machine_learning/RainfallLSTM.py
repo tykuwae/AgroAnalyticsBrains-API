@@ -34,7 +34,7 @@ import datetime
 from flask import jsonify
 
 # Importa o banco de dados
-from app import db
+from app import db, db2
 
 # prepara datesets de teste e treino
 def create_dataset(dataset, look_back=1):
@@ -210,13 +210,15 @@ def PredictLSTMRainfall(stationId):
     
 
     # Persiste dicionário
-    _id = db.rainfall_predictions.insert(dict_data)
+    _id = db2.LSTM_predictions.insert(dict_data)
     
     message="Finalizado em " + tempoFinalização.strftime("%Y/%m/%d às %H:%M:%S") + ".    (ID: " + str(_id) + ")"
 
     del dict_data['date']
     del dict_data['_id']
 
+    print(message)
+    print('\n')
     print('----------------------- Sucesso! ----------------------------')
     print('\n')
 

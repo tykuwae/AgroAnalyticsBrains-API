@@ -34,7 +34,7 @@ import datetime
 from flask import jsonify
 
 # Importa o banco de dados
-from app import db
+from app import db, db2
 
 def PredictSARIMARainfall(stationId):
 
@@ -130,6 +130,7 @@ def PredictSARIMARainfall(stationId):
     dict_data['index']=index_list
     dict_data['city']=station_info[0]['unparsed_city']
     dict_data['model']='SARIMA'
+    dict_data['type']='Precipitação'
     tempoFinalização=datetime.datetime.now()
     dict_data['date']=tempoFinalização
     dict_data['pdq']= str(p)+',  '+str(d)+',  '+str(q)
@@ -141,13 +142,16 @@ def PredictSARIMARainfall(stationId):
     
 
     # Persiste dicionário
-    _id = db.rainfall_predictions.insert(dict_data)
+    _id = db2.SARIMA_predictions.insert(dict_data)
     
     message="Finalizado em " + tempoFinalização.strftime("%Y/%m/%d às %H:%M:%S") + ".    (ID: " + str(_id) + ")"
 
     del dict_data['date']
     del dict_data['_id']
 
+    
+    print(message)
+    print('\n')
     print('----------------------- Sucesso! ----------------------------')
     print('\n')
 

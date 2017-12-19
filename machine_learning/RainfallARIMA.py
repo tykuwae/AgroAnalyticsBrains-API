@@ -34,7 +34,7 @@ import datetime
 from flask import jsonify
 
 # Importa o banco de dados
-from app import db
+from app import db, db2
 
 def PredictARIMARainfall(stationId):
 
@@ -75,7 +75,7 @@ def PredictARIMARainfall(stationId):
     p=2
     d=0
     q=2
-    arima202 = sm.tsa.SARIMAX(ts_train, order=(p,d,q))
+    arima202 = sm.tsa.SARIMAX(ts_train, order=(p,d,q), enforce_stationarity=False, enforce_invertibility=False)
     model_results = arima202.fit()
 
     # Realiza previsões
@@ -126,6 +126,7 @@ def PredictARIMARainfall(stationId):
     dict_data['index']=index_list
     dict_data['city']=station_info[0]['unparsed_city']
     dict_data['model']='ARIMA'
+    dict_data['type']='Precipitação'
     tempoFinalização=datetime.datetime.now()
     dict_data['date']=tempoFinalização
     dict_data['pdq']= str(p)+',  '+str(d)+',  '+str(q)
@@ -136,13 +137,15 @@ def PredictARIMARainfall(stationId):
     
 
     # Persiste dicionário
-    _id = db.rainfall_predictions.insert(dict_data)
+    _id = db2.ARIMA_predictions.insert(dict_data)
     
     message="Finalizado em " + tempoFinalização.strftime("%Y/%m/%d às %H:%M:%S") + ".    (ID: " + str(_id) + ")"
 
     del dict_data['date']
     del dict_data['_id']
 
+    print(message)
+    print('\n')
     print('----------------------- Sucesso! ----------------------------')
     print('\n')
 
