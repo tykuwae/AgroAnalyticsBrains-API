@@ -80,7 +80,7 @@ $(document).ready(function() {
 	
 			$.ajax({
 				type : 'POST',
-				url : '/PredictRainfall',
+				url : '/PredictTemperature',
 				data : formData,
 				processData : false,
 				contentType : false
@@ -328,7 +328,7 @@ function ARIMAupdateChart() {
 
 function SARIMAupdateChart() {
 	
-		var updateData = $.get('/chartRainfallSARIMA');
+		var updateData = $.get('/chartTemperatureSARIMA');
 		
 		$('#SARIMADiagnosis').show();
 	

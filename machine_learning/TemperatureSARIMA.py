@@ -36,7 +36,7 @@ from flask import jsonify
 # Importa o banco de dados
 from app import db, db2
 
-def PredictSARIMARainfall(stationId):
+def PredictSARIMATemperature(stationId):
 
     # Get station Infos
     station_info = list(db.meteo_data_weather_stations.find({'_id':ObjectId(stationId)}))
@@ -54,16 +54,16 @@ def PredictSARIMARainfall(stationId):
     # Busca dataset no banco de dados
     weather = list(db.meteo_data_weather_data.find({'weather_station_id': ObjectId(stationId)}))
     weather_normalized = pd.io.json.json_normalize(weather)
-    df_rainfall = pd.DataFrame(weather_normalized[['analysis_date', 'rainfall.rainfall']])
-    df_rainfall = df_rainfall.set_index('analysis_date')
-    ts_rainfall = df_rainfall['2000-03-01':'2017-08-11'].groupby(pd.TimeGrouper(freq='MS')).mean()
+    df_temperature = pd.DataFrame(weather_normalized[['analysis_date', 'weather_forecast.med_temp']])
+    df_temperature = df_temperature.set_index('analysis_date')
+    ts_temperature = df_temperature['2000-03-01':'2017-08-11'].groupby(pd.TimeGrouper(freq='MS')).mean()
 
     # Cria amostra de treinamento e de teste antes de realizar a análise
-    n_sample = ts_rainfall.shape[0]
+    n_sample = ts_temperature.shape[0]
     n_forecast=12
     n_train=n_sample-n_forecast
-    ts_train = ts_rainfall.iloc[:n_train]['rainfall.rainfall']
-    ts_test = ts_rainfall.iloc[n_train:]['rainfall.rainfall']
+    ts_train = ts_temperature.iloc[:n_train]['weather_forecast.med_temp']
+    ts_test = ts_temperature.iloc[n_train:]['weather_forecast.med_temp']
     print(ts_train.shape)
     print(ts_test.shape)
     print("Training Series:", "\n", ts_train.tail(), "\n")
@@ -72,12 +72,12 @@ def PredictSARIMARainfall(stationId):
     print('----------------- Iniciando Treinamento ---------------------')
     print('\n')
     # Treina e define o modelo
-    p=0
+    p=4
     d=0
-    q=4
-    P=3
+    q=0
+    P=4
     D=0
-    Q=4
+    Q=3
     s=12
     arima202 = sm.tsa.SARIMAX(ts_train, order=(p,d,q), seasonal_order=(P,D,Q,s), enforce_stationarity=False, enforce_invertibility=False)
     model_results = arima202.fit()
@@ -95,7 +95,7 @@ def PredictSARIMARainfall(stationId):
     pred = pred_mean.values
     pred_list = pred.tolist()
 
-    data = ts_rainfall['rainfall.rainfall'].values
+    data = ts_temperature['weather_forecast.med_temp'].values
     data_list = data.tolist()
 
     index = pred_mean.index
@@ -130,7 +130,7 @@ def PredictSARIMARainfall(stationId):
     dict_data['index']=index_list
     dict_data['city']=station_info[0]['unparsed_city']
     dict_data['model']='SARIMA'
-    dict_data['type']='Precipitação'
+    dict_data['type']='Temperatura'
     tempoFinalização=datetime.datetime.now()
     dict_data['date']=tempoFinalização
     dict_data['pdq']= str(p)+',  '+str(d)+',  '+str(q)

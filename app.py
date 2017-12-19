@@ -41,6 +41,7 @@ from machine_learning.RainfallSARIMA import PredictSARIMARainfall
 from machine_learning.RainfallLSTM import PredictLSTMRainfall
 from machine_learning.TemperatureARIMA import PredictARIMATemperature, getArimaTempratureParameters
 from machine_learning.TemperatureLSTM import PredictLSTMTemperature
+from machine_learning.TemperatureSARIMA import PredictSARIMATemperature
 
 # ------------------------------ Routes -----------------------------------
 
@@ -94,19 +95,9 @@ def PredictTemperature():
     if request.form['modelo'] == 'ARIMA':
         result = PredictARIMATemperature(request.form['stationId'],request.form['p'],request.form['d'],request.form['q'])
     elif request.form['modelo'] == 'SARIMA':
-        result = PredictSARIMARainfall(request.form['stationId'])
+        result = PredictSARIMATemperature(request.form['stationId'])
     elif request.form['modelo'] == 'LSTM':
         result = PredictLSTMTemperature(request.form['stationId'])
-    else:
-        result = 'ERRO!'
-    return result
-
-@app.route('/TemperatureParameters', methods=['POST'])
-def TemperatureParameters():
-    if request.form['modelo'] == 'ARIMA':
-        result = getArimaTempratureParameters(request.form['stationId'])
-    elif request.form['modelo'] == 'SARIMA':
-        result = PredictSARIMARainfall(request.form['stationId'])
     else:
         result = 'ERRO!'
     return result
@@ -121,6 +112,15 @@ def RainfallParameters():
         result = 'ERRO!'
     return result
 
+@app.route('/TemperatureParameters', methods=['POST'])
+def TemperatureParameters():
+    if request.form['modelo'] == 'ARIMA':
+        result = getArimaTempratureParameters(request.form['stationId'])
+    elif request.form['modelo'] == 'SARIMA':
+        result = PredictSARIMARainfall(request.form['stationId'])
+    else:
+        result = 'ERRO!'
+    return result
 
 @app.route("/chartRainfallARIMA")
 def chartRainfallARIMAdata():
@@ -206,6 +206,45 @@ def chartRainfallSARIMAdata():
     '''
     # Obtem ultimo documento de previsão processado
     last_data = list(db2.SARIMA_predictions.find({'model': 'SARIMA', 'type': 'Precipitação'}).sort([('_id',-1)]).limit(1))
+    # Carraga para variável timestamps o index dos ultimos 5 anos
+    timestamps=last_data[0]['index'][-60:]
+    # Trata formato do index
+    date_strings = [d.strftime('%m-%Y') for d in timestamps]
+    # Cria uma lista com um index por ano, para não sobrecarregar a visão do gráfico
+    date=[]
+    for i in range(0,len(date_strings)):
+        if i%4 == 0:
+            date.append(date_strings[i])
+        else:
+            date.append("")
+    # Preenche lista com index
+    index = date
+    # Preenche lista com dados originais de precipitação
+    data_train = last_data[0]['data_train'][-len(date_strings):]
+    # Preenche lista com dados originais de precipitação
+    data_test = last_data[0]['data_test'][-len(date_strings):]
+    # Preenche lista com dados de previsão 
+    pred = last_data[0]['data_pred'][-len(date_strings):]
+    return jsonify({'data_train':data_train, 
+                    'data_test':data_test, 
+                    'pred': pred, 'index':index, 
+                    'pdq':last_data[0]['pdq'],
+                    'PDQs':last_data[0]['PDQs'], 
+                    'rmse_train':format(last_data[0]['rmse_train'], '.4f'), 
+                    'rmse_test':format(last_data[0]['rmse_test'], '.4f'),
+                    'AIC':format(last_data[0]['AIC'], '.4f'),
+                    'BIC':format(last_data[0]['BIC'], '.4f'),
+                    'city':last_data[0]['city'],
+                    'date':last_data[0]['date'].strftime('%d/%m/%Y')})
+
+@app.route("/chartTemperatureSARIMA")
+def chartTemperatureSARIMA():
+    '''
+        Rota utilizada para plotar gráfico de treino e teste do último modelo SARIMA processado
+        para dados de Temperatura
+    '''
+    # Obtem ultimo documento de previsão processado
+    last_data = list(db2.SARIMA_predictions.find({'model': 'SARIMA', 'type': 'Temperatura'}).sort([('_id',-1)]).limit(1))
     # Carraga para variável timestamps o index dos ultimos 5 anos
     timestamps=last_data[0]['index'][-60:]
     # Trata formato do index

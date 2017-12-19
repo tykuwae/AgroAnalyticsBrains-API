@@ -189,7 +189,7 @@ def PredictARIMATemperature(stationId, ARIMA_p, ARIMA_d, ARIMA_q):
     # Realiza previsões
     pred_begin = ts_train.index[model_results.loglikelihood_burn]
     pred_end = ts_test.index[-1] + datetime.timedelta(days=365)
-    pred = model_results.get_prediction(start=pred_begin.strftime('2000-03-%d'),
+    pred = model_results.get_prediction(start=pred_begin.strftime('2013-01-%d'),
                                         end=pred_end.strftime('%Y-%m-%d'))
     pred_mean = pred.predicted_mean
     pred_ci = pred.conf_int(alpha=0.05)
