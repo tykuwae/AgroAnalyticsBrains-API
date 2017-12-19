@@ -40,6 +40,7 @@ from machine_learning.RainfallARIMA import PredictARIMARainfall
 from machine_learning.RainfallSARIMA import PredictSARIMARainfall
 from machine_learning.RainfallLSTM import PredictLSTMRainfall
 from machine_learning.TemperatureARIMA import PredictARIMATemperature, getArimaTempratureParameters
+from machine_learning.TemperatureLSTM import PredictLSTMTemperature
 
 # ------------------------------ Routes -----------------------------------
 
@@ -95,7 +96,7 @@ def PredictTemperature():
     elif request.form['modelo'] == 'SARIMA':
         result = PredictSARIMARainfall(request.form['stationId'])
     elif request.form['modelo'] == 'LSTM':
-        result = PredictLSTMRainfall(request.form['stationId'])
+        result = PredictLSTMTemperature(request.form['stationId'])
     else:
         result = 'ERRO!'
     return result
@@ -233,6 +234,45 @@ def chartRainfallLSTMdata():
     '''
     # Obtem ultimo documento de previsão processado
     last_data = list(db2.LSTM_predictions.find({'model': 'LSTM', 'type': 'Precipitação'}).sort([('_id',-1)]).limit(1))
+    # Carraga para variável timestamps o index dos ultimos 5 anos
+    timestamps=last_data[0]['index'][-60:]
+    # Trata formato do index
+    date_strings = [d.strftime('%m-%Y') for d in timestamps]
+    # Cria uma lista com um index por ano, para não sobrecarregar a visão do gráfico
+    date=[]
+    for i in range(0,len(date_strings)):
+        if i%4 == 0:
+            date.append(date_strings[i])
+        else:
+            date.append("")
+    # Preenche lista com index
+    index = date
+    # Preenche lista com dados originais de precipitação
+    data_train = last_data[0]['data_train'][-len(date_strings):]
+    # Preenche lista com dados originais de precipitação
+    data_test = last_data[0]['data_test'][-len(date_strings):]
+    # Preenche lista com dados de previsão 
+    pred = last_data[0]['data_pred'][-len(date_strings):]
+    return jsonify({'data_train':data_train, 
+                    'data_test':data_test, 
+                    'pred': pred, 
+                    'index':index, 
+                    'LSTM':last_data[0]['LSTM'],
+                    'Epoch':last_data[0]['Epoch'],
+                    'Optimizer':last_data[0]['Optimizer'], 
+                    'rmse_train':format(last_data[0]['rmse_train'], '.4f'), 
+                    'rmse_test':format(last_data[0]['rmse_test'], '.4f'),
+                    'city':last_data[0]['city'],
+                    'date':last_data[0]['date'].strftime('%d/%m/%Y')})
+                
+@app.route("/chartTemperatureLSTM")
+def chartTemperatureLSTM():
+    '''
+        Rota utilizada para plotar gráfico de treino e teste do último modelo LSTM processado
+        para dados de Temperatura
+    '''
+    # Obtem ultimo documento de previsão processado
+    last_data = list(db2.LSTM_predictions.find({'model': 'LSTM', 'type': 'Temperatura'}).sort([('_id',-1)]).limit(1))
     # Carraga para variável timestamps o index dos ultimos 5 anos
     timestamps=last_data[0]['index'][-60:]
     # Trata formato do index

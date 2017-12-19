@@ -117,7 +117,7 @@ $(document).ready(function() {
 	
 			$.ajax({
 				type : 'POST',
-				url : '/PredictRainfall',
+				url : '/PredictTemperature',
 				data : formData,
 				processData : false,
 				contentType : false,
@@ -437,7 +437,7 @@ function SARIMAupdateChart() {
 
 	function LSTMupdateChart() {
 		
-			var updateData = $.get('/chartRainfallLSTM');
+			var updateData = $.get('/chartTemperatureLSTM');
 			
 			$('#LSTMDiagnosis').show();
 		
