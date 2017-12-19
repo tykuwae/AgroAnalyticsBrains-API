@@ -157,8 +157,21 @@
                                                 <select id="stationsARIMA" class="form-control select2" style="width: 400px;">
                                                     <opttion value=''> </opttion>
                                                 </select>
+                                                <h4>ARIMA(
+                                                    <div class="form-group">
+                                                        <input class="form-control" id="ARIMAp" placeholder="p" style="width:40px">
+                                                    </div>
+                                                    ,
+                                                    <div class="form-group">
+                                                        <input class="form-control" id="ARIMAd" placeholder="d" style="width:40px">
+                                                    </div>
+                                                    ,
+                                                    <div class="form-group">
+                                                        <input class="form-control" id="ARIMAq" placeholder="q" style="width:40px">
+                                                    </div>
+                                                )</h4>
+                                                <button type="submit" class="btn btn-default">Executar</button>
                                             </div>
-                                            <button type="submit" class="btn btn-default">Executar</button>
                                         </form>
                                         <br>
                                         <div id="ARIMAsuccessAlert" class="alert alert-success alert-dismissible" role="alert" style="display:none;">
@@ -171,7 +184,34 @@
                                             <h4><i class="icon fa fa-refresh"></i> Processando</h4>
                                             <h id="ARIMAprocessingMessage"></h>
                                         </div> 
-                                        <button id="ARIMAupdateChart" class="btn btn-default" >Última Atualização</button>      
+                                        <button id="ARIMAparameters" class="btn btn-default" >Buscar Parâmetros</button>      
+                                        <button id="ARIMAupdateChart" class="btn btn-default" >Última Atualização</button>     
+                                    </div>
+                                </div>
+                                <div id="ARIMABestParameters"  class="row"  style="display:none">
+                                    <br/>
+                                    <div class="col-xs-12">
+                                        <h4>Test Grid de Parãmetros</h4>
+                                        <table id="example2" class="table table-bordered table-hover">
+                                            <tbody>
+                                                <tr>
+                                                    <td><b>Ordem</b></td>
+                                                    <td id="ARIMAOrdem1"></td>
+                                                    <td id="ARIMAOrdem2"></td>
+                                                    <td id="ARIMAOrdem3"></td>
+                                                    <td id="ARIMAOrdem4"></td>
+                                                    <td id="ARIMAOrdem5"></td>
+                                                </tr>
+                                                <tr>
+                                                    <td><b>EQM</b></td>
+                                                    <td id="ARIMAEQM1"></td>
+                                                    <td id="ARIMAEQM2"></td>
+                                                    <td id="ARIMAEQM3"></td>
+                                                    <td id="ARIMAEQM4"></td>
+                                                    <td id="ARIMAEQM5"></td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
                                     </div>
                                 </div>
                                 <div id="ARIMADiagnosis"  class="row"  style="display:none">

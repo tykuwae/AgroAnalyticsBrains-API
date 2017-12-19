@@ -39,6 +39,9 @@ $(document).ready(function() {
 			var formData = new FormData();
 			formData.append('modelo', 'ARIMA')
 			formData.append('stationId' ,$('#stationsARIMA option:selected').val());
+			formData.append('p' , Number($('#ARIMAp').val()));
+			formData.append('d' , Number($('#ARIMAd').val()));
+			formData.append('q' , Number($('#ARIMAq').val()));
 	
 			$.ajax({
 				type : 'POST',
@@ -167,7 +170,54 @@ $(document).ready(function() {
 $('#ARIMAupdateChart').on('click', ARIMAupdateChart);
 $('#SARIMAupdateChart').on('click', SARIMAupdateChart);
 $('#LSTMupdateChart').on('click', LSTMupdateChart);
+$('#ARIMAparameters').on('click', ARIMAparameters);
 
+function ARIMAparameters() {
+
+	var formData = new FormData();
+	formData.append('modelo', 'ARIMA')
+	formData.append('stationId' ,$('#stationsARIMA option:selected').val());
+
+	$('#ARIMABestParameters').hide();
+	$('#ARIMAprocessingAlert').show();
+	$('#ARIMAprocessingMessage').text("Aguarde até o término da execução do test grid.");
+	$('#ARIMAsuccessAlert').hide();
+
+	$.ajax({
+		type : 'POST',
+		url : '/RainfallParameters',
+		data : formData,
+		processData : false,
+		contentType : false
+	})
+	.done(function(data) {
+		
+		if (data.error) {
+			//
+			// 	TODO
+			//
+			$('#errorAlert').text(data.error).show();
+			$('#successAlert').hide();
+		}
+		else {
+			$('#ARIMABestParameters').show();
+			$('#ARIMAOrdem1').text(data.ordem[0]);
+			$('#ARIMAOrdem2').text(data.ordem[1]);
+			$('#ARIMAOrdem3').text(data.ordem[2]);
+			$('#ARIMAOrdem4').text(data.ordem[3]);
+			$('#ARIMAOrdem5').text(data.ordem[4]);
+			$('#ARIMAEQM1').text(data.eqm[0]);
+			$('#ARIMAEQM2').text(data.eqm[1]);
+			$('#ARIMAEQM3').text(data.eqm[2]);
+			$('#ARIMAEQM4').text(data.eqm[3]);
+			$('#ARIMAEQM5').text(data.eqm[4]);
+			$('#ARIMAprocessingAlert').hide();
+			
+		}
+
+	});
+
+}
 
 function ARIMAupdateChart() {
 

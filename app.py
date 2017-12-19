@@ -36,7 +36,7 @@ db = client.AgroAnalyticsDataLake
 db2 = client.AgroAnalyticsAggregations
 
 # Machine Learning Models
-from machine_learning.RainfallARIMA import PredictARIMARainfall
+from machine_learning.RainfallARIMA import PredictARIMARainfall, getArimaRainfallParameters
 from machine_learning.RainfallSARIMA import PredictSARIMARainfall
 from machine_learning.RainfallLSTM import PredictLSTMRainfall
 from machine_learning.TemperatureARIMA import PredictARIMATemperature, getArimaTempratureParameters
@@ -80,7 +80,7 @@ def stations():
 @app.route('/PredictRainfall', methods=['POST'])
 def PredictRainfall():
     if request.form['modelo'] == 'ARIMA':
-        result = PredictARIMARainfall(request.form['stationId'])
+        result = PredictARIMARainfall(request.form['stationId'],request.form['p'],request.form['d'],request.form['q'])
     elif request.form['modelo'] == 'SARIMA':
         result = PredictSARIMARainfall(request.form['stationId'])
     elif request.form['modelo'] == 'LSTM':
@@ -110,6 +110,17 @@ def TemperatureParameters():
     else:
         result = 'ERRO!'
     return result
+
+@app.route('/RainfallParameters', methods=['POST'])
+def RainfallParameters():
+    if request.form['modelo'] == 'ARIMA':
+        result = getArimaRainfallParameters(request.form['stationId'])
+    elif request.form['modelo'] == 'SARIMA':
+        result = PredictSARIMARainfall(request.form['stationId'])
+    else:
+        result = 'ERRO!'
+    return result
+
 
 @app.route("/chartRainfallARIMA")
 def chartRainfallARIMAdata():
