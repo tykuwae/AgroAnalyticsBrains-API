@@ -200,6 +200,7 @@ def PredictLSTMRainfall(stationId):
     dict_data['index']=index
     dict_data['city']=station_info[0]['unparsed_city']
     dict_data['model']='LSTM'
+    dict_data['type']='Precipitação'
     tempoFinalização=datetime.now()
     dict_data['date']=tempoFinalização
     dict_data['LSTM']= 4
